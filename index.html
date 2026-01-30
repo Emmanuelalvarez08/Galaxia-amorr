@@ -38,31 +38,45 @@
     color:pink;
     font-size:16px;
     box-shadow:0 0 18px rgba(255,105,180,.35);
-    z-index:9998;          /* ✅ súper arriba */
-    display:none;          /* se activa al iniciar */
+    z-index:9998;
+    display:none;
     backdrop-filter: blur(3px);
     white-space:nowrap;
   }
 
-  /* MENSAJE AUDIO */
-  #audioMsg{
+  /* MENSAJE / BOTÓN AUDIO */
+  #audioBar{
     position:fixed;
     top:56px;
     left:50%;
     transform:translateX(-50%);
+    z-index:9999;
+    display:none;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    max-width:92vw;
+  }
+  #audioMsg{
     padding:10px 14px;
     border-radius:16px;
     background:rgba(0,0,0,.55);
     color:pink;
     font-size:14px;
     box-shadow:0 0 18px rgba(255,105,180,.35);
-    z-index:9999;
-    display:none;
     backdrop-filter: blur(3px);
-    max-width:92vw;
+  }
+  #audioBtn{
+    padding:10px 14px;
+    border-radius:16px;
+    border:none;
+    cursor:pointer;
+    background:#ff69b4;
+    color:white;
+    box-shadow:0 0 18px rgba(255,105,180,.35);
   }
 
-  /* BOTÓN */
+  /* BOTÓN PRINCIPAL */
   #startBtn{
     position:fixed;
     top:50%;
@@ -122,9 +136,12 @@
 
   <div id="surpriseLayer"></div>
 
-  <!-- ✅ contador y mensajes existen SIEMPRE -->
   <div id="loveCounter"></div>
-  <div id="audioMsg"></div>
+
+  <div id="audioBar">
+    <div id="audioMsg"></div>
+    <button id="audioBtn">▶ Activar música</button>
+  </div>
 
   <button id="startBtn">💖 Toca baby 💕</button>
 
@@ -165,7 +182,6 @@ function drawHeart(x,y,s){
 
 function animateHearts(){
   hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
-
   for (const h of hearts){
     h.alpha += h.alphaSpeed;
     if(h.alpha > 1 || h.alpha < 0.15) h.alphaSpeed *= -1;
@@ -182,7 +198,6 @@ function animateHearts(){
     hctx.fillStyle = h.color;
     drawHeart(h.x, h.y, h.size);
   }
-
   hctx.shadowBlur = 0;
   hctx.globalAlpha = 1;
   requestAnimationFrame(animateHearts);
@@ -217,32 +232,33 @@ function animateGalaxy(){
   gctx.clearRect(0,0,galaxy.width,galaxy.height);
   gctx.save();
   gctx.translate(galaxy.width/2, galaxy.height/2);
-
   for (const st of stars){
     st.a += st.s;
     st.o += st.os;
     if(st.o>1 || st.o<0) st.os *= -1;
-
     gctx.globalAlpha = st.o;
     gctx.fillStyle = st.c;
     gctx.beginPath();
     gctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2, 0, Math.PI*2);
     gctx.fill();
   }
-
   gctx.restore();
   gctx.globalAlpha = 1;
   requestAnimationFrame(animateGalaxy);
 }
 animateGalaxy();
 
-/* ================= 🎵 MÚSICA (ROBUSTA) ================= */
+/* ================= 🎵 AUDIO (BOTÓN EXTRA SI BLOQUEA) ================= */
+const audioBar = document.getElementById("audioBar");
 const audioMsg = document.getElementById("audioMsg");
+const audioBtn = document.getElementById("audioBtn");
 
-function showAudioMsg(txt){
-  audioMsg.textContent = txt;
-  audioMsg.style.display = "block";
-  setTimeout(()=>{ audioMsg.style.display = "none"; }, 6000);
+function showAudioBar(msg){
+  audioMsg.textContent = msg;
+  audioBar.style.display = "flex";
+}
+function hideAudioBar(){
+  audioBar.style.display = "none";
 }
 
 const music = new Audio("./cancion.mp3");
@@ -253,33 +269,38 @@ music.volume = 0.85;
 async function tryPlayMusic(){
   try{
     await music.play();
+    hideAudioBar();
+    return true;
   }catch(e){
-    showAudioMsg("🔇 Si no suena, toca la pantalla una vez más para activar el audio.");
+    // Mostramos botón manual para activar
+    showAudioBar("🔇 Tu navegador bloqueó el audio. Presiona ▶ Activar música.");
+    return false;
   }
 }
 
 // Aviso si el archivo no existe
 fetch("./cancion.mp3", { method: "HEAD" })
-  .then(r => { if(!r.ok) showAudioMsg("❌ No se encuentra cancion.mp3 (revisa el nombre en GitHub)"); })
-  .catch(()=> showAudioMsg("❌ No se pudo cargar cancion.mp3"));
+  .then(r => { if(!r.ok) showAudioBar("❌ No se encuentra cancion.mp3 (revisa el nombre en GitHub)"); })
+  .catch(()=> showAudioBar("❌ No se pudo cargar cancion.mp3"));
 
-// También lo intenta en el primer toque/clic
+// Botón extra para activar música
+audioBtn.onclick = () => { tryPlayMusic(); };
+
+// También lo intenta en el primer toque/clic en pantalla
 window.addEventListener("pointerdown", () => { tryPlayMusic(); }, { once:true });
 window.addEventListener("touchstart", () => { tryPlayMusic(); }, { once:true });
 
 /* ================= 💖 CONTADOR ================= */
 const loveCounter = document.getElementById("loveCounter");
-const loveStart = new Date("June 20, 2024 00:00:00").getTime(); // cambia si querés
+const loveStart = new Date("June 20, 2024 00:00:00").getTime();
 
 function updateLoveCounter(){
   const now = Date.now();
   const diff = now - loveStart;
-
   const d = Math.floor(diff / (1000*60*60*24));
   const h = Math.floor((diff / (1000*60*60)) % 24);
   const m = Math.floor((diff / (1000*60)) % 60);
   const s = Math.floor((diff / 1000) % 60);
-
   loveCounter.textContent = `Te he querido por ${d} días, ${h}h ${m}m ${s}s 💖`;
 }
 
@@ -320,7 +341,6 @@ function orbitLoop(){
 }
 
 function spawn(){
-  // FOTOS
   ["foto1.jpg","foto2.jpg"].forEach((src,i)=>{
     const img = document.createElement("img");
     img.src = src;
@@ -328,7 +348,6 @@ function spawn(){
     makeOrbit(img, 320 + i*180, 0.00025 + i*0.00008, Math.random()*Math.PI*2);
   });
 
-  // VIDEOS
   ["video1.mp4","video2.mp4"].forEach((src,i)=>{
     const v = document.createElement("video");
     v.src = src;
@@ -340,7 +359,6 @@ function spawn(){
     makeOrbit(v, 420 + i*200, 0.00018 + i*0.00007, Math.random()*Math.PI*2);
   });
 
-  // FRASES
   phrases.forEach((txt,i)=>{
     const t = document.createElement("div");
     t.className = "floatingText";
@@ -356,9 +374,10 @@ const startBtn = document.getElementById("startBtn");
 let counterTimer = null;
 
 startBtn.onclick = async () => {
+  // Intento de música (si bloquea, sale botón “Activar música”)
   await tryPlayMusic();
 
-  // ✅ contador visible siempre
+  // contador
   loveCounter.style.display = "block";
   updateLoveCounter();
   if (counterTimer) clearInterval(counterTimer);

@@ -2,10 +2,18 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Para Diana 💖</title>
 
 <style>
+  :root{
+    /* Estos valores los setea JS con base en el iPhone */
+    --mediaW: 120px;   /* ancho fotos/videos */
+    --textSize: 18px;  /* tamaño frases */
+    --counterSize: 14px;
+    --padSafeTop: env(safe-area-inset-top, 0px);
+  }
+
   body{
     margin:0;
     overflow:hidden;
@@ -13,6 +21,8 @@
     font-family:Arial, sans-serif;
     color:white;
     text-align:center;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   canvas{ position:fixed; inset:0; }
@@ -29,40 +39,44 @@
   /* CONTADOR */
   #loveCounter{
     position:fixed;
-    top:14px;
+    top: calc(10px + var(--padSafeTop));
     left:50%;
     transform:translateX(-50%);
-    padding:10px 14px;
+    padding:8px 12px;
     border-radius:16px;
     background:rgba(0,0,0,.55);
     color:pink;
-    font-size:16px;
+    font-size: var(--counterSize);
     box-shadow:0 0 18px rgba(255,105,180,.35);
     z-index:9998;
     display:none;
     backdrop-filter: blur(3px);
     white-space:nowrap;
+    max-width: 92vw;
+    overflow:hidden;
+    text-overflow: ellipsis;
   }
 
   /* MENSAJE / BOTÓN AUDIO */
   #audioBar{
     position:fixed;
-    top:56px;
+    top: calc(46px + var(--padSafeTop));
     left:50%;
     transform:translateX(-50%);
     z-index:9999;
     display:none;
-    gap:10px;
+    gap:8px;
     align-items:center;
     justify-content:center;
     max-width:92vw;
+    flex-wrap:wrap;
   }
   #audioMsg{
-    padding:10px 14px;
+    padding:8px 12px;
     border-radius:16px;
     background:rgba(0,0,0,.55);
     color:pink;
-    font-size:14px;
+    font-size:13px;
     box-shadow:0 0 18px rgba(255,105,180,.35);
     backdrop-filter: blur(3px);
   }
@@ -74,6 +88,7 @@
     background:#ff69b4;
     color:white;
     box-shadow:0 0 18px rgba(255,105,180,.35);
+    font-size:14px;
   }
 
   /* BOTÓN PRINCIPAL */
@@ -82,20 +97,20 @@
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    padding:22px 60px;
-    font-size:28px;
+    padding:16px 28px;
+    font-size:20px;
     background:#ff69b4;
     color:white;
     border:none;
-    border-radius:30px;
+    border-radius:22px;
     cursor:pointer;
-    box-shadow:0 0 30px hotpink;
+    box-shadow:0 0 22px hotpink;
     z-index:10;
     animation:pulse 2s infinite;
   }
   @keyframes pulse{
     0%{transform:translate(-50%,-50%) scale(1)}
-    50%{transform:translate(-50%,-50%) scale(1.08)}
+    50%{transform:translate(-50%,-50%) scale(1.06)}
     100%{transform:translate(-50%,-50%) scale(1)}
   }
 
@@ -105,27 +120,37 @@
     left:50%;
     top:50%;
     transform:translate(-50%,-50%);
+    will-change: transform;
   }
 
   .floatingMedia{
     position:absolute;
-    width:150px;
-    border-radius:18px;
-    box-shadow:0 0 25px rgba(255,192,203,.9);
+    width: var(--mediaW);
+    border-radius:16px;
+    box-shadow:0 0 18px rgba(255,192,203,.85);
     transform:translate(-50%,-50%);
   }
 
   .floatingText{
     position:absolute;
     transform:translate(-50%,-50%);
-    font-size:24px;
+    font-size: var(--textSize);
     color:pink;
-    text-shadow:0 0 18px hotpink;
+    text-shadow:0 0 14px hotpink;
     white-space:nowrap;
-    padding:10px 14px;
-    border-radius:20px;
+    padding:8px 12px;
+    border-radius:18px;
     background:rgba(0,0,0,.25);
     backdrop-filter: blur(3px);
+    max-width: 80vw;
+    overflow:hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Ajuste extra para pantallas muy pequeñas */
+  @media (max-width: 380px){
+    #startBtn{ font-size:18px; padding:14px 22px; }
+    #audioBtn{ font-size:13px; }
   }
 </style>
 </head>
@@ -146,6 +171,26 @@
   <button id="startBtn">💖 Toca baby 💕</button>
 
 <script>
+/* ====== Responsive iPhone-first: escala todo según pantalla ====== */
+function applyPhoneScale(){
+  const minSide = Math.min(window.innerWidth, window.innerHeight);
+  // escala: iPhone típico ~390-430. Tomamos base 430.
+  const scale = Math.max(0.72, Math.min(1.0, minSide / 430));
+
+  // tamaños (CSS variables)
+  const mediaW = Math.round(110 * scale);          // fotos/videos
+  const textSize = Math.round(18 * scale);         // frases
+  const counterSize = Math.round(14 * scale);      // contador
+
+  document.documentElement.style.setProperty("--mediaW", mediaW + "px");
+  document.documentElement.style.setProperty("--textSize", textSize + "px");
+  document.documentElement.style.setProperty("--counterSize", counterSize + "px");
+
+  return scale;
+}
+let UI_SCALE = applyPhoneScale();
+window.addEventListener("resize", ()=>{ UI_SCALE = applyPhoneScale(); });
+
 /* ================= 💖 CORAZONES DE FONDO ================= */
 const heartsCanvas = document.getElementById("heartsCanvas");
 const hctx = heartsCanvas.getContext("2d");
@@ -158,18 +203,22 @@ resizeHearts();
 addEventListener("resize", resizeHearts);
 
 const heartColors = ["#ff69b4", "#ff9ccc", "#ff4da6", "#ffd1e8"];
-const HEARTS_COUNT = 180;
-
-let hearts = Array.from({length: HEARTS_COUNT}, () => ({
-  x: Math.random()*innerWidth,
-  y: Math.random()*innerHeight,
-  size: 10 + Math.random()*18,
-  alpha: 0.2 + Math.random()*0.8,
-  alphaSpeed: 0.006 + Math.random()*0.012,
-  driftX: (Math.random()*0.3 - 0.15),
-  driftY: (Math.random()*0.25 - 0.12),
-  color: heartColors[Math.floor(Math.random()*heartColors.length)]
-}));
+let hearts = [];
+function initHearts(){
+  const count = Math.round(130 * UI_SCALE); // menos para iPhone
+  hearts = Array.from({length: count}, () => ({
+    x: Math.random()*innerWidth,
+    y: Math.random()*innerHeight,
+    size: (7 + Math.random()*12) * UI_SCALE,
+    alpha: 0.2 + Math.random()*0.8,
+    alphaSpeed: (0.006 + Math.random()*0.012),
+    driftX: (Math.random()*0.25 - 0.125) * UI_SCALE,
+    driftY: (Math.random()*0.22 - 0.11) * UI_SCALE,
+    color: heartColors[Math.floor(Math.random()*heartColors.length)]
+  }));
+}
+initHearts();
+addEventListener("resize", initHearts);
 
 function drawHeart(x,y,s){
   hctx.beginPath();
@@ -184,7 +233,7 @@ function animateHearts(){
   hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
   for (const h of hearts){
     h.alpha += h.alphaSpeed;
-    if(h.alpha > 1 || h.alpha < 0.15) h.alphaSpeed *= -1;
+    if(h.alpha > 1 || h.alpha < 0.18) h.alphaSpeed *= -1;
 
     h.x += h.driftX; h.y += h.driftY;
     if(h.x < -50) h.x = innerWidth + 50;
@@ -194,7 +243,7 @@ function animateHearts(){
 
     hctx.globalAlpha = h.alpha;
     hctx.shadowColor = h.color;
-    hctx.shadowBlur = 18;
+    hctx.shadowBlur = 14 * UI_SCALE;
     hctx.fillStyle = h.color;
     drawHeart(h.x, h.y, h.size);
   }
@@ -217,38 +266,47 @@ addEventListener("resize", resizeGalaxy);
 
 const starColors = ["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
 let stars = [];
-for(let i=0;i<900;i++){
-  stars.push({
-    a:Math.random()*Math.PI*2,
-    r:Math.random()*360,
-    s:0.0012+Math.random()*0.003,
-    o:Math.random(),
-    os:0.004+Math.random()*0.01,
-    c:starColors[Math.floor(Math.random()*starColors.length)]
-  });
+function initStars(){
+  const count = Math.round(750 * UI_SCALE); // menos para iPhone
+  stars = [];
+  for(let i=0;i<count;i++){
+    stars.push({
+      a:Math.random()*Math.PI*2,
+      r:Math.random()*(300*UI_SCALE + 120),
+      s:0.0012+Math.random()*0.003,
+      o:Math.random(),
+      os:0.004+Math.random()*0.01,
+      c:starColors[Math.floor(Math.random()*starColors.length)]
+    });
+  }
 }
+initStars();
+addEventListener("resize", initStars);
 
 function animateGalaxy(){
   gctx.clearRect(0,0,galaxy.width,galaxy.height);
   gctx.save();
   gctx.translate(galaxy.width/2, galaxy.height/2);
+
   for (const st of stars){
     st.a += st.s;
     st.o += st.os;
     if(st.o>1 || st.o<0) st.os *= -1;
+
     gctx.globalAlpha = st.o;
     gctx.fillStyle = st.c;
     gctx.beginPath();
-    gctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2, 0, Math.PI*2);
+    gctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2*UI_SCALE, 0, Math.PI*2);
     gctx.fill();
   }
+
   gctx.restore();
   gctx.globalAlpha = 1;
   requestAnimationFrame(animateGalaxy);
 }
 animateGalaxy();
 
-/* ================= 🎵 AUDIO (BOTÓN EXTRA SI BLOQUEA) ================= */
+/* ================= 🎵 AUDIO (Safari iPhone) ================= */
 const audioBar = document.getElementById("audioBar");
 const audioMsg = document.getElementById("audioMsg");
 const audioBtn = document.getElementById("audioBtn");
@@ -257,9 +315,7 @@ function showAudioBar(msg){
   audioMsg.textContent = msg;
   audioBar.style.display = "flex";
 }
-function hideAudioBar(){
-  audioBar.style.display = "none";
-}
+function hideAudioBar(){ audioBar.style.display = "none"; }
 
 const music = new Audio("./cancion.mp3");
 music.loop = true;
@@ -272,39 +328,31 @@ async function tryPlayMusic(){
     hideAudioBar();
     return true;
   }catch(e){
-    // Mostramos botón manual para activar
-    showAudioBar("🔇 Tu navegador bloqueó el audio. Presiona ▶ Activar música.");
+    showAudioBar("🔇 Safari bloqueó el audio. Presiona ▶ Activar música.");
     return false;
   }
 }
 
-// Aviso si el archivo no existe
-fetch("./cancion.mp3", { method: "HEAD" })
-  .then(r => { if(!r.ok) showAudioBar("❌ No se encuentra cancion.mp3 (revisa el nombre en GitHub)"); })
-  .catch(()=> showAudioBar("❌ No se pudo cargar cancion.mp3"));
-
-// Botón extra para activar música
 audioBtn.onclick = () => { tryPlayMusic(); };
 
-// También lo intenta en el primer toque/clic en pantalla
-window.addEventListener("pointerdown", () => { tryPlayMusic(); }, { once:true });
-window.addEventListener("touchstart", () => { tryPlayMusic(); }, { once:true });
+/* Aviso si el archivo no existe */
+fetch("./cancion.mp3", { method:"HEAD" })
+  .then(r => { if(!r.ok) showAudioBar("❌ No se encuentra cancion.mp3 (revisa el nombre en GitHub)"); })
+  .catch(()=> showAudioBar("❌ No se pudo cargar cancion.mp3"));
 
 /* ================= 💖 CONTADOR ================= */
 const loveCounter = document.getElementById("loveCounter");
 const loveStart = new Date("June 20, 2024 00:00:00").getTime();
 
 function updateLoveCounter(){
-  const now = Date.now();
-  const diff = now - loveStart;
+  const diff = Date.now() - loveStart;
   const d = Math.floor(diff / (1000*60*60*24));
   const h = Math.floor((diff / (1000*60*60)) % 24);
   const m = Math.floor((diff / (1000*60)) % 60);
-  const s = Math.floor((diff / 1000) % 60);
-  loveCounter.textContent = `Te he querido por ${d} días, ${h}h ${m}m ${s}s 💖`;
+  loveCounter.textContent = `Te he querido por ${d} días, ${h}h ${m}m 💖`;
 }
 
-/* ================= 💖 SORPRESA ORBITANDO ================= */
+/* ================= 💖 SORPRESA ORBITANDO (responsive) ================= */
 const layer = document.getElementById("surpriseLayer");
 const phrases = [
   "Te amo ranita 💖🐸",
@@ -317,7 +365,7 @@ const phrases = [
 
 let orbiters = [];
 
-function makeOrbit(node,r,s,a){
+function makeOrbit(node, r, s, a){
   const o = document.createElement("div");
   o.className = "orbit";
   o.dataset.r = r;
@@ -330,24 +378,38 @@ function makeOrbit(node,r,s,a){
 
 function orbitLoop(){
   const t = performance.now();
+  const aspect = Math.min(0.8, window.innerHeight / window.innerWidth); // iPhone: órbita más compacta vertical
   for (const o of orbiters){
     const r = +o.dataset.r;
     const s = +o.dataset.s;
     const a = +o.dataset.a + t*s;
-    o.style.transform =
-      `translate(-50%,-50%) translate(${Math.cos(a)*r}px,${Math.sin(a)*(r*0.7)}px)`;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * (r * 0.62 * aspect);
+    o.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`;
   }
   requestAnimationFrame(orbitLoop);
 }
 
 function spawn(){
+  // limpieza por si re-tocan
+  layer.innerHTML = "";
+  orbiters = [];
+
+  // radios base adaptados al iPhone
+  const minSide = Math.min(innerWidth, innerHeight);
+  const baseR = Math.max(110, minSide * 0.23);
+  const gapMedia = Math.max(70, minSide * 0.16);
+  const gapText  = Math.max(48, minSide * 0.11);
+
+  // FOTOS
   ["foto1.jpg","foto2.jpg"].forEach((src,i)=>{
     const img = document.createElement("img");
     img.src = src;
     img.className = "floatingMedia";
-    makeOrbit(img, 320 + i*180, 0.00025 + i*0.00008, Math.random()*Math.PI*2);
+    makeOrbit(img, baseR + i*gapMedia, 0.00040 + i*0.00010, Math.random()*Math.PI*2);
   });
 
+  // VIDEOS
   ["video1.mp4","video2.mp4"].forEach((src,i)=>{
     const v = document.createElement("video");
     v.src = src;
@@ -356,15 +418,17 @@ function spawn(){
     v.muted = true;
     v.playsInline = true;
     v.className = "floatingMedia";
-    makeOrbit(v, 420 + i*200, 0.00018 + i*0.00007, Math.random()*Math.PI*2);
+    makeOrbit(v, baseR + gapMedia*1.1 + i*gapMedia, 0.00030 + i*0.00010, Math.random()*Math.PI*2);
   });
 
-  phrases.forEach((txt,i)=>{
+  // FRASES (menos y más cortas en iPhone)
+  const phraseCount = (minSide < 390) ? 4 : 5;
+  for(let i=0;i<phraseCount;i++){
     const t = document.createElement("div");
     t.className = "floatingText";
-    t.innerText = txt;
-    makeOrbit(t, 220 + i*120, 0.00035 + i*0.00005, Math.random()*Math.PI*2);
-  });
+    t.innerText = phrases[i % phrases.length];
+    makeOrbit(t, baseR*0.85 + i*gapText, 0.00055 + i*0.00006, Math.random()*Math.PI*2);
+  }
 
   orbitLoop();
 }
@@ -374,14 +438,13 @@ const startBtn = document.getElementById("startBtn");
 let counterTimer = null;
 
 startBtn.onclick = async () => {
-  // Intento de música (si bloquea, sale botón “Activar música”)
+  // Intento de música (si Safari bloquea, sale el botón extra)
   await tryPlayMusic();
 
-  // contador
   loveCounter.style.display = "block";
   updateLoveCounter();
   if (counterTimer) clearInterval(counterTimer);
-  counterTimer = setInterval(updateLoveCounter, 1000);
+  counterTimer = setInterval(updateLoveCounter, 60000);
 
   startBtn.style.display = "none";
   spawn();

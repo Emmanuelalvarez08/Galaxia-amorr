@@ -32,6 +32,22 @@ canvas{
   pointer-events:none;
 }
 
+/* CONTADOR (dentro de la sorpresa) */
+#loveCounter{
+  position:fixed;
+  top:16px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:10px 14px;
+  border-radius:16px;
+  background:rgba(0,0,0,.45);
+  color:pink;
+  font-size:16px;
+  box-shadow:0 0 18px rgba(255,105,180,.35);
+  z-index:9;
+  display:none; /* se muestra cuando inicia la sorpresa */
+}
+
 /* BOTÓN */
 #startBtn{
   position:fixed;
@@ -94,10 +110,11 @@ canvas{
 <canvas id="galaxy"></canvas>
 <div id="surpriseLayer"></div>
 
+<div id="loveCounter"></div>
 <button id="startBtn">💖 Toca baby 💕</button>
 
 <script>
-/* ================= 💖 CORAZONES DE FONDO ================= */
+/* ================= 💖 CORAZONES DE FONDO (MÁS VISIBLES) ================= */
 const heartsCanvas = document.getElementById("heartsCanvas");
 const hctx = heartsCanvas.getContext("2d");
 
@@ -108,14 +125,20 @@ function resizeHearts(){
 resizeHearts();
 addEventListener("resize", resizeHearts);
 
+const heartColors = ["#ff69b4", "#ff9ccc", "#ff4da6", "#ffd1e8"];
 let hearts = [];
-for(let i=0;i<120;i++){
+const HEARTS_COUNT = 180;
+
+for(let i=0;i<HEARTS_COUNT;i++){
   hearts.push({
     x: Math.random()*innerWidth,
     y: Math.random()*innerHeight,
-    size: 6 + Math.random()*10,
-    alpha: Math.random(),
-    speed: 0.002 + Math.random()*0.004
+    size: 10 + Math.random()*18,
+    alpha: 0.2 + Math.random()*0.8,
+    alphaSpeed: 0.006 + Math.random()*0.012,
+    driftX: (Math.random()*0.3 - 0.15),
+    driftY: (Math.random()*0.25 - 0.12),
+    color: heartColors[Math.floor(Math.random()*heartColors.length)]
   });
 }
 
@@ -130,13 +153,27 @@ function drawHeart(x,y,s){
 
 function animateHearts(){
   hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
+
   hearts.forEach(h=>{
-    h.alpha += h.speed;
-    if(h.alpha > 1 || h.alpha < 0) h.speed *= -1;
+    h.alpha += h.alphaSpeed;
+    if(h.alpha > 1 || h.alpha < 0.15) h.alphaSpeed *= -1;
+
+    h.x += h.driftX;
+    h.y += h.driftY;
+
+    if(h.x < -50) h.x = innerWidth + 50;
+    if(h.x > innerWidth + 50) h.x = -50;
+    if(h.y < -50) h.y = innerHeight + 50;
+    if(h.y > innerHeight + 50) h.y = -50;
+
     hctx.globalAlpha = h.alpha;
-    hctx.fillStyle = "#ff69b4";
+    hctx.shadowColor = h.color;
+    hctx.shadowBlur = 18;
+    hctx.fillStyle = h.color;
     drawHeart(h.x, h.y, h.size);
   });
+
+  hctx.shadowBlur = 0;
   hctx.globalAlpha = 1;
   requestAnimationFrame(animateHearts);
 }
@@ -186,10 +223,62 @@ function animateGalaxy(){
 }
 animateGalaxy();
 
-/* ================= 💖 SORPRESA ================= */
-const music = new Audio("cancion.mp3");
-music.loop=true;
+/* ================= 🎵 MÚSICA (A PRUEBA DE BLOQUEOS) ================= */
+const music = new Audio("./cancion.mp3");
+music.loop = true;
+music.preload = "auto";
+music.volume = 0.85;
 
+function showAudioMsg(txt){
+  let box = document.getElementById("audioMsg");
+  if(!box){
+    box = document.createElement("div");
+    box.id = "audioMsg";
+    box.style.position = "fixed";
+    box.style.left = "50%";
+    box.style.top = "56px";
+    box.style.transform = "translateX(-50%)";
+    box.style.padding = "10px 14px";
+    box.style.borderRadius = "14px";
+    box.style.background = "rgba(0,0,0,.55)";
+    box.style.color = "pink";
+    box.style.fontSize = "14px";
+    box.style.zIndex = "9999";
+    box.style.boxShadow = "0 0 18px rgba(255,105,180,.35)";
+    document.body.appendChild(box);
+  }
+  box.textContent = txt;
+  setTimeout(()=> box.remove(), 5000);
+}
+
+async function tryPlayMusic(){
+  try{ await music.play(); }
+  catch(e){ showAudioMsg("🔇 Toca la pantalla una vez para activar el audio."); }
+}
+
+fetch("./cancion.mp3", { method: "HEAD" })
+  .then(r => { if(!r.ok) showAudioMsg("❌ No se encuentra: cancion.mp3 (revisa nombre en GitHub)"); })
+  .catch(()=> showAudioMsg("❌ No se pudo cargar cancion.mp3"));
+
+window.addEventListener("pointerdown", () => { tryPlayMusic(); }, { once:true });
+window.addEventListener("touchstart", () => { tryPlayMusic(); }, { once:true });
+
+/* ================= 💖 CONTADOR DE AMOR (DENTRO DE LA SORPRESA) ================= */
+const loveCounter = document.getElementById("loveCounter");
+const loveStart = new Date("June 20, 2024 00:00:00").getTime(); // <-- cambia esta fecha si querés
+
+function updateLoveCounter(){
+  const now = Date.now();
+  const diff = now - loveStart;
+
+  const d = Math.floor(diff / (1000*60*60*24));
+  const h = Math.floor((diff / (1000*60*60)) % 24);
+  const m = Math.floor((diff / (1000*60)) % 60);
+
+  loveCounter.textContent = `Te he querido por ${d} días, ${h} horas y ${m} minutos 💖`;
+}
+
+/* ================= 💖 SORPRESA ORBITANDO ================= */
 const layer=document.getElementById("surpriseLayer");
 const phrases=[
   "Te amo ranita 💖🐸",
@@ -249,7 +338,13 @@ function spawn(){
 }
 
 startBtn.onclick=async()=>{
-  try{await music.play();}catch(e){}
+  await tryPlayMusic();
+
+  // mostrar y activar contador
+  loveCounter.style.display = "block";
+  updateLoveCounter();
+  setInterval(updateLoveCounter, 60000);
+
   startBtn.style.display="none";
   spawn();
 };

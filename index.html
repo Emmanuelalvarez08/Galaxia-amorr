@@ -14,9 +14,17 @@ body{
   color:white;
   text-align:center;
 }
-canvas{position:fixed; inset:0; z-index:1}
 
-/* CAPA SORPRESA (encima de la galaxia) */
+/* CANVAS */
+canvas{
+  position:fixed;
+  inset:0;
+}
+
+/* CAPAS */
+#heartsCanvas{ z-index:0; }
+#galaxy{ z-index:1; }
+
 #surpriseLayer{
   position:fixed;
   inset:0;
@@ -47,103 +55,143 @@ canvas{position:fixed; inset:0; z-index:1}
   100%{transform:translate(-50%,-50%) scale(1)}
 }
 
-/* ELEMENTOS ORBITANDO */
+/* ORBITAS */
 .orbit{
   position:absolute;
   left:50%;
   top:50%;
   transform:translate(-50%,-50%);
-  width:1px;
-  height:1px;
-  will-change:transform;
 }
 
+/* FOTOS / VIDEOS */
 .floatingMedia{
   position:absolute;
-  width:140px;
-  border-radius:16px;
-  box-shadow:0 0 20px rgba(255,192,203,.9);
+  width:150px;
+  border-radius:18px;
+  box-shadow:0 0 25px rgba(255,192,203,.9);
   transform:translate(-50%,-50%);
 }
 
+/* FRASES */
 .floatingText{
   position:absolute;
   transform:translate(-50%,-50%);
   font-size:24px;
   color:pink;
-  text-shadow:0 0 15px hotpink;
+  text-shadow:0 0 18px hotpink;
   white-space:nowrap;
-  padding:8px 12px;
-  border-radius:16px;
+  padding:10px 14px;
+  border-radius:20px;
   background:rgba(0,0,0,.25);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
 }
 </style>
 </head>
 
 <body>
 
+<canvas id="heartsCanvas"></canvas>
 <canvas id="galaxy"></canvas>
 <div id="surpriseLayer"></div>
 
 <button id="startBtn">💖 Toca baby 💕</button>
 
 <script>
-/* 🎵 Música */
-const music = new Audio("cancion.mp3");
-music.loop = true;
+/* ================= 💖 CORAZONES DE FONDO ================= */
+const heartsCanvas = document.getElementById("heartsCanvas");
+const hctx = heartsCanvas.getContext("2d");
 
-/* 🌌 GALAXIA (parpadeo rosado) */
-const canvas = document.getElementById("galaxy");
-const ctx = canvas.getContext("2d");
-
-function resize(){
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+function resizeHearts(){
+  heartsCanvas.width = innerWidth;
+  heartsCanvas.height = innerHeight;
 }
-resize();
-addEventListener("resize", resize);
+resizeHearts();
+addEventListener("resize", resizeHearts);
 
-const colors = ["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
-let stars = [];
-for(let i=0;i<750;i++){
+let hearts = [];
+for(let i=0;i<120;i++){
+  hearts.push({
+    x: Math.random()*innerWidth,
+    y: Math.random()*innerHeight,
+    size: 6 + Math.random()*10,
+    alpha: Math.random(),
+    speed: 0.002 + Math.random()*0.004
+  });
+}
+
+function drawHeart(x,y,s){
+  hctx.beginPath();
+  hctx.moveTo(x, y);
+  hctx.bezierCurveTo(x - s, y - s, x - s*2, y + s, x, y + s*2);
+  hctx.bezierCurveTo(x + s*2, y + s, x + s, y - s, x, y);
+  hctx.closePath();
+  hctx.fill();
+}
+
+function animateHearts(){
+  hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
+  hearts.forEach(h=>{
+    h.alpha += h.speed;
+    if(h.alpha > 1 || h.alpha < 0) h.speed *= -1;
+    hctx.globalAlpha = h.alpha;
+    hctx.fillStyle = "#ff69b4";
+    drawHeart(h.x, h.y, h.size);
+  });
+  hctx.globalAlpha = 1;
+  requestAnimationFrame(animateHearts);
+}
+animateHearts();
+
+/* ================= 🌌 GALAXIA ================= */
+const galaxy = document.getElementById("galaxy");
+const gctx = galaxy.getContext("2d");
+
+function resizeGalaxy(){
+  galaxy.width = innerWidth;
+  galaxy.height = innerHeight;
+}
+resizeGalaxy();
+addEventListener("resize", resizeGalaxy);
+
+const colors=["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
+let stars=[];
+for(let i=0;i<900;i++){
   stars.push({
     a:Math.random()*Math.PI*2,
-    r:Math.random()*320,
-    s:0.0015+Math.random()*0.003,
+    r:Math.random()*360,
+    s:0.0012+Math.random()*0.003,
     o:Math.random(),
-    os:0.006+Math.random()*0.012,
+    os:0.004+Math.random()*0.01,
     c:colors[Math.floor(Math.random()*colors.length)]
   });
 }
 
 function animateGalaxy(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();
-  ctx.translate(canvas.width/2, canvas.height/2);
-
+  gctx.clearRect(0,0,galaxy.width,galaxy.height);
+  gctx.save();
+  gctx.translate(galaxy.width/2, galaxy.height/2);
   stars.forEach(st=>{
-    st.a += st.s;
-    st.o += st.os;
-    if(st.o>1 || st.o<0) st.os *= -1;
-
-    ctx.globalAlpha = st.o;
-    ctx.fillStyle = st.c;
-    ctx.beginPath();
-    ctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2, 0, Math.PI*2);
-    ctx.fill();
+    st.a+=st.s;
+    st.o+=st.os;
+    if(st.o>1||st.o<0) st.os*=-1;
+    gctx.globalAlpha=st.o;
+    gctx.fillStyle=st.c;
+    gctx.beginPath();
+    gctx.arc(Math.cos(st.a)*st.r,Math.sin(st.a)*st.r,2,0,Math.PI*2);
+    gctx.fill();
   });
-
-  ctx.restore();
-  ctx.globalAlpha = 1;
+  gctx.restore();
+  gctx.globalAlpha=1;
   requestAnimationFrame(animateGalaxy);
 }
 animateGalaxy();
 
-/* 💖 SORPRESA ORBITANDO */
-const layer = document.getElementById("surpriseLayer");
+/* ================= 💖 SORPRESA ================= */
+const music = new Audio("cancion.mp3");
+music.loop=true;
 
-const phrases = [
+const layer=document.getElementById("surpriseLayer");
+const phrases=[
   "Te amo ranita 💖🐸",
   "Gracias por existir 🌹",
   "Eres mi universo ✨",
@@ -152,109 +200,58 @@ const phrases = [
   "Mi lugar favorito eres tú 💘"
 ];
 
-function makeOrbitElement(node, radius, speed, startAngle){
-  const orbit = document.createElement("div");
-  orbit.className = "orbit";
-  orbit.dataset.radius = String(radius);
-  orbit.dataset.speed = String(speed);
-  orbit.dataset.angle = String(startAngle);
-  orbit.appendChild(node);
-  layer.appendChild(orbit);
-  return orbit;
+let orbiters=[];
+function makeOrbit(node,r,s,a){
+  const o=document.createElement("div");
+  o.className="orbit";
+  o.dataset.r=r;
+  o.dataset.s=s;
+  o.dataset.a=a;
+  o.appendChild(node);
+  layer.appendChild(o);
+  orbiters.push(o);
 }
-
-let orbiters = [];
-let orbitAnimId = null;
 
 function orbitLoop(){
-  const t = performance.now();
+  const t=performance.now();
   orbiters.forEach(o=>{
-    const r = Number(o.dataset.radius);
-    const s = Number(o.dataset.speed);
-    const a0 = Number(o.dataset.angle);
-
-    const a = a0 + (t * s);
-    const x = Math.cos(a) * r;
-    const y = Math.sin(a) * (r * 0.72); // un poco elíptico
-
-    o.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
+    const r=+o.dataset.r;
+    const s=+o.dataset.s;
+    const a=+o.dataset.a + t*s;
+    o.style.transform=`translate(-50%,-50%) translate(${Math.cos(a)*r}px,${Math.sin(a)*(r*0.7)}px)`;
   });
-  orbitAnimId = requestAnimationFrame(orbitLoop);
+  requestAnimationFrame(orbitLoop);
 }
 
-/* crea fotos orbitando */
-function spawnPhotosOrbit(){
-  const photoFiles = ["foto1.jpg","foto2.jpg"];
-  photoFiles.forEach((src, idx)=>{
-    const img = document.createElement("img");
-    img.src = src;
-    img.className = "floatingMedia";
-
-    const r = 220 + idx*70;           // radios distintos
-    const speed = 0.00035 + idx*0.00008; // velocidades distintas
-    const ang = Math.random()*Math.PI*2;
-
-    orbiters.push(makeOrbitElement(img, r, speed, ang));
+function spawn(){
+  ["foto1.jpg","foto2.jpg"].forEach((src,i)=>{
+    const img=document.createElement("img");
+    img.src=src;
+    img.className="floatingMedia";
+    makeOrbit(img,320+i*180,0.00025+i*0.00008,Math.random()*Math.PI*2);
   });
-}
 
-/* crea videos orbitando */
-function spawnVideosOrbit(){
-  const videoFiles = ["video1.mp4","video2.mp4"];
-  videoFiles.forEach((src, idx)=>{
-    const vid = document.createElement("video");
-    vid.src = src;
-    vid.autoplay = true;
-    vid.loop = true;
-    vid.muted = true;
-    vid.playsInline = true;
-    vid.className = "floatingMedia";
-
-    const r = 260 + idx*80;
-    const speed = 0.00028 + idx*0.00007;
-    const ang = Math.random()*Math.PI*2;
-
-    orbiters.push(makeOrbitElement(vid, r, speed, ang));
+  ["video1.mp4","video2.mp4"].forEach((src,i)=>{
+    const v=document.createElement("video");
+    v.src=src; v.autoplay=true; v.loop=true; v.muted=true; v.playsInline=true;
+    v.className="floatingMedia";
+    makeOrbit(v,420+i*200,0.00018+i*0.00007,Math.random()*Math.PI*2);
   });
+
+  phrases.forEach((txt,i)=>{
+    const t=document.createElement("div");
+    t.className="floatingText";
+    t.innerText=txt;
+    makeOrbit(t,220+i*120,0.00035+i*0.00005,Math.random()*Math.PI*2);
+  });
+
+  orbitLoop();
 }
 
-/* frases orbitando (se crean varias y rotan) */
-function spawnPhrasesOrbit(){
-  for(let i=0;i<6;i++){
-    const t = document.createElement("div");
-    t.className = "floatingText";
-    t.innerText = phrases[Math.floor(Math.random()*phrases.length)];
-
-    const r = 170 + i*35;
-    const speed = 0.00045 + i*0.00005;
-    const ang = Math.random()*Math.PI*2;
-
-    orbiters.push(makeOrbitElement(t, r, speed, ang));
-  }
-
-  // cada cierto tiempo cambia texto para que no sea repetitivo
-  setInterval(()=>{
-    const texts = layer.querySelectorAll(".floatingText");
-    texts.forEach(el=>{
-      el.innerText = phrases[Math.floor(Math.random()*phrases.length)];
-    });
-  }, 5000);
-}
-
-/* CLICK BOTÓN */
-document.getElementById("startBtn").onclick = async () => {
-  // música (puede fallar si no existe el archivo, no rompe)
-  try{ await music.play(); }catch(e){}
-
-  startBtn.style.display = "none";
-
-  // crear orbitadores
-  spawnPhotosOrbit();
-  spawnVideosOrbit();
-  spawnPhrasesOrbit();
-
-  // iniciar animación de órbita
-  if(!orbitAnimId) orbitLoop();
+startBtn.onclick=async()=>{
+  try{await music.play();}catch(e){}
+  startBtn.style.display="none";
+  spawn();
 };
 </script>
 

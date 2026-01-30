@@ -1,120 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Para Diana 💖</title>
 
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:#000;
-  font-family:Arial, sans-serif;
-  color:white;
-  text-align:center;
-}
+  body{
+    margin:0;
+    overflow:hidden;
+    background:#000;
+    font-family:Arial, sans-serif;
+    color:white;
+    text-align:center;
+  }
 
-/* CANVAS */
-canvas{
-  position:fixed;
-  inset:0;
-}
+  canvas{ position:fixed; inset:0; }
+  #heartsCanvas{ z-index:0; }
+  #galaxy{ z-index:1; }
 
-/* CAPAS */
-#heartsCanvas{ z-index:0; }
-#galaxy{ z-index:1; }
+  #surpriseLayer{
+    position:fixed;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+  }
 
-#surpriseLayer{
-  position:fixed;
-  inset:0;
-  z-index:5;
-  pointer-events:none;
-}
+  /* CONTADOR */
+  #loveCounter{
+    position:fixed;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 14px;
+    border-radius:16px;
+    background:rgba(0,0,0,.55);
+    color:pink;
+    font-size:16px;
+    box-shadow:0 0 18px rgba(255,105,180,.35);
+    z-index:9998;          /* ✅ súper arriba */
+    display:none;          /* se activa al iniciar */
+    backdrop-filter: blur(3px);
+    white-space:nowrap;
+  }
 
-/* CONTADOR (dentro de la sorpresa) */
-#loveCounter{
-  position:fixed;
-  top:16px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:10px 14px;
-  border-radius:16px;
-  background:rgba(0,0,0,.45);
-  color:pink;
-  font-size:16px;
-  box-shadow:0 0 18px rgba(255,105,180,.35);
-  z-index:9;
-  display:none; /* se muestra cuando inicia la sorpresa */
-}
+  /* MENSAJE AUDIO */
+  #audioMsg{
+    position:fixed;
+    top:56px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 14px;
+    border-radius:16px;
+    background:rgba(0,0,0,.55);
+    color:pink;
+    font-size:14px;
+    box-shadow:0 0 18px rgba(255,105,180,.35);
+    z-index:9999;
+    display:none;
+    backdrop-filter: blur(3px);
+    max-width:92vw;
+  }
 
-/* BOTÓN */
-#startBtn{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  padding:22px 60px;
-  font-size:28px;
-  background:#ff69b4;
-  color:white;
-  border:none;
-  border-radius:30px;
-  cursor:pointer;
-  box-shadow:0 0 30px hotpink;
-  z-index:10;
-  animation:pulse 2s infinite;
-}
-@keyframes pulse{
-  0%{transform:translate(-50%,-50%) scale(1)}
-  50%{transform:translate(-50%,-50%) scale(1.08)}
-  100%{transform:translate(-50%,-50%) scale(1)}
-}
+  /* BOTÓN */
+  #startBtn{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    padding:22px 60px;
+    font-size:28px;
+    background:#ff69b4;
+    color:white;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    box-shadow:0 0 30px hotpink;
+    z-index:10;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{transform:translate(-50%,-50%) scale(1)}
+    50%{transform:translate(-50%,-50%) scale(1.08)}
+    100%{transform:translate(-50%,-50%) scale(1)}
+  }
 
-/* ORBITAS */
-.orbit{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-}
+  /* ORBITAS */
+  .orbit{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+  }
 
-/* FOTOS / VIDEOS */
-.floatingMedia{
-  position:absolute;
-  width:150px;
-  border-radius:18px;
-  box-shadow:0 0 25px rgba(255,192,203,.9);
-  transform:translate(-50%,-50%);
-}
+  .floatingMedia{
+    position:absolute;
+    width:150px;
+    border-radius:18px;
+    box-shadow:0 0 25px rgba(255,192,203,.9);
+    transform:translate(-50%,-50%);
+  }
 
-/* FRASES */
-.floatingText{
-  position:absolute;
-  transform:translate(-50%,-50%);
-  font-size:24px;
-  color:pink;
-  text-shadow:0 0 18px hotpink;
-  white-space:nowrap;
-  padding:10px 14px;
-  border-radius:20px;
-  background:rgba(0,0,0,.25);
-  backdrop-filter: blur(3px);
-}
+  .floatingText{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    font-size:24px;
+    color:pink;
+    text-shadow:0 0 18px hotpink;
+    white-space:nowrap;
+    padding:10px 14px;
+    border-radius:20px;
+    background:rgba(0,0,0,.25);
+    backdrop-filter: blur(3px);
+  }
 </style>
 </head>
 
 <body>
+  <canvas id="heartsCanvas"></canvas>
+  <canvas id="galaxy"></canvas>
 
-<canvas id="heartsCanvas"></canvas>
-<canvas id="galaxy"></canvas>
-<div id="surpriseLayer"></div>
+  <div id="surpriseLayer"></div>
 
-<div id="loveCounter"></div>
-<button id="startBtn">💖 Toca baby 💕</button>
+  <!-- ✅ contador y mensajes existen SIEMPRE -->
+  <div id="loveCounter"></div>
+  <div id="audioMsg"></div>
+
+  <button id="startBtn">💖 Toca baby 💕</button>
 
 <script>
-/* ================= 💖 CORAZONES DE FONDO (MÁS VISIBLES) ================= */
+/* ================= 💖 CORAZONES DE FONDO ================= */
 const heartsCanvas = document.getElementById("heartsCanvas");
 const hctx = heartsCanvas.getContext("2d");
 
@@ -126,21 +141,18 @@ resizeHearts();
 addEventListener("resize", resizeHearts);
 
 const heartColors = ["#ff69b4", "#ff9ccc", "#ff4da6", "#ffd1e8"];
-let hearts = [];
 const HEARTS_COUNT = 180;
 
-for(let i=0;i<HEARTS_COUNT;i++){
-  hearts.push({
-    x: Math.random()*innerWidth,
-    y: Math.random()*innerHeight,
-    size: 10 + Math.random()*18,
-    alpha: 0.2 + Math.random()*0.8,
-    alphaSpeed: 0.006 + Math.random()*0.012,
-    driftX: (Math.random()*0.3 - 0.15),
-    driftY: (Math.random()*0.25 - 0.12),
-    color: heartColors[Math.floor(Math.random()*heartColors.length)]
-  });
-}
+let hearts = Array.from({length: HEARTS_COUNT}, () => ({
+  x: Math.random()*innerWidth,
+  y: Math.random()*innerHeight,
+  size: 10 + Math.random()*18,
+  alpha: 0.2 + Math.random()*0.8,
+  alphaSpeed: 0.006 + Math.random()*0.012,
+  driftX: (Math.random()*0.3 - 0.15),
+  driftY: (Math.random()*0.25 - 0.12),
+  color: heartColors[Math.floor(Math.random()*heartColors.length)]
+}));
 
 function drawHeart(x,y,s){
   hctx.beginPath();
@@ -154,13 +166,11 @@ function drawHeart(x,y,s){
 function animateHearts(){
   hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
 
-  hearts.forEach(h=>{
+  for (const h of hearts){
     h.alpha += h.alphaSpeed;
     if(h.alpha > 1 || h.alpha < 0.15) h.alphaSpeed *= -1;
 
-    h.x += h.driftX;
-    h.y += h.driftY;
-
+    h.x += h.driftX; h.y += h.driftY;
     if(h.x < -50) h.x = innerWidth + 50;
     if(h.x > innerWidth + 50) h.x = -50;
     if(h.y < -50) h.y = innerHeight + 50;
@@ -171,7 +181,7 @@ function animateHearts(){
     hctx.shadowBlur = 18;
     hctx.fillStyle = h.color;
     drawHeart(h.x, h.y, h.size);
-  });
+  }
 
   hctx.shadowBlur = 0;
   hctx.globalAlpha = 1;
@@ -190,8 +200,8 @@ function resizeGalaxy(){
 resizeGalaxy();
 addEventListener("resize", resizeGalaxy);
 
-const colors=["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
-let stars=[];
+const starColors = ["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
+let stars = [];
 for(let i=0;i<900;i++){
   stars.push({
     a:Math.random()*Math.PI*2,
@@ -199,7 +209,7 @@ for(let i=0;i<900;i++){
     s:0.0012+Math.random()*0.003,
     o:Math.random(),
     os:0.004+Math.random()*0.01,
-    c:colors[Math.floor(Math.random()*colors.length)]
+    c:starColors[Math.floor(Math.random()*starColors.length)]
   });
 }
 
@@ -207,65 +217,59 @@ function animateGalaxy(){
   gctx.clearRect(0,0,galaxy.width,galaxy.height);
   gctx.save();
   gctx.translate(galaxy.width/2, galaxy.height/2);
-  stars.forEach(st=>{
-    st.a+=st.s;
-    st.o+=st.os;
-    if(st.o>1||st.o<0) st.os*=-1;
-    gctx.globalAlpha=st.o;
-    gctx.fillStyle=st.c;
+
+  for (const st of stars){
+    st.a += st.s;
+    st.o += st.os;
+    if(st.o>1 || st.o<0) st.os *= -1;
+
+    gctx.globalAlpha = st.o;
+    gctx.fillStyle = st.c;
     gctx.beginPath();
-    gctx.arc(Math.cos(st.a)*st.r,Math.sin(st.a)*st.r,2,0,Math.PI*2);
+    gctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2, 0, Math.PI*2);
     gctx.fill();
-  });
+  }
+
   gctx.restore();
-  gctx.globalAlpha=1;
+  gctx.globalAlpha = 1;
   requestAnimationFrame(animateGalaxy);
 }
 animateGalaxy();
 
-/* ================= 🎵 MÚSICA (A PRUEBA DE BLOQUEOS) ================= */
+/* ================= 🎵 MÚSICA (ROBUSTA) ================= */
+const audioMsg = document.getElementById("audioMsg");
+
+function showAudioMsg(txt){
+  audioMsg.textContent = txt;
+  audioMsg.style.display = "block";
+  setTimeout(()=>{ audioMsg.style.display = "none"; }, 6000);
+}
+
 const music = new Audio("./cancion.mp3");
 music.loop = true;
 music.preload = "auto";
 music.volume = 0.85;
 
-function showAudioMsg(txt){
-  let box = document.getElementById("audioMsg");
-  if(!box){
-    box = document.createElement("div");
-    box.id = "audioMsg";
-    box.style.position = "fixed";
-    box.style.left = "50%";
-    box.style.top = "56px";
-    box.style.transform = "translateX(-50%)";
-    box.style.padding = "10px 14px";
-    box.style.borderRadius = "14px";
-    box.style.background = "rgba(0,0,0,.55)";
-    box.style.color = "pink";
-    box.style.fontSize = "14px";
-    box.style.zIndex = "9999";
-    box.style.boxShadow = "0 0 18px rgba(255,105,180,.35)";
-    document.body.appendChild(box);
-  }
-  box.textContent = txt;
-  setTimeout(()=> box.remove(), 5000);
-}
-
 async function tryPlayMusic(){
-  try{ await music.play(); }
-  catch(e){ showAudioMsg("🔇 Toca la pantalla una vez para activar el audio."); }
+  try{
+    await music.play();
+  }catch(e){
+    showAudioMsg("🔇 Si no suena, toca la pantalla una vez más para activar el audio.");
+  }
 }
 
+// Aviso si el archivo no existe
 fetch("./cancion.mp3", { method: "HEAD" })
-  .then(r => { if(!r.ok) showAudioMsg("❌ No se encuentra: cancion.mp3 (revisa nombre en GitHub)"); })
+  .then(r => { if(!r.ok) showAudioMsg("❌ No se encuentra cancion.mp3 (revisa el nombre en GitHub)"); })
   .catch(()=> showAudioMsg("❌ No se pudo cargar cancion.mp3"));
 
+// También lo intenta en el primer toque/clic
 window.addEventListener("pointerdown", () => { tryPlayMusic(); }, { once:true });
 window.addEventListener("touchstart", () => { tryPlayMusic(); }, { once:true });
 
-/* ================= 💖 CONTADOR DE AMOR (DENTRO DE LA SORPRESA) ================= */
+/* ================= 💖 CONTADOR ================= */
 const loveCounter = document.getElementById("loveCounter");
-const loveStart = new Date("June 20, 2024 00:00:00").getTime(); // <-- cambia esta fecha si querés
+const loveStart = new Date("June 20, 2024 00:00:00").getTime(); // cambia si querés
 
 function updateLoveCounter(){
   const now = Date.now();
@@ -274,13 +278,14 @@ function updateLoveCounter(){
   const d = Math.floor(diff / (1000*60*60*24));
   const h = Math.floor((diff / (1000*60*60)) % 24);
   const m = Math.floor((diff / (1000*60)) % 60);
+  const s = Math.floor((diff / 1000) % 60);
 
-  loveCounter.textContent = `Te he querido por ${d} días, ${h} horas y ${m} minutos 💖`;
+  loveCounter.textContent = `Te he querido por ${d} días, ${h}h ${m}m ${s}s 💖`;
 }
 
 /* ================= 💖 SORPRESA ORBITANDO ================= */
-const layer=document.getElementById("surpriseLayer");
-const phrases=[
+const layer = document.getElementById("surpriseLayer");
+const phrases = [
   "Te amo ranita 💖🐸",
   "Gracias por existir 🌹",
   "Eres mi universo ✨",
@@ -289,66 +294,79 @@ const phrases=[
   "Mi lugar favorito eres tú 💘"
 ];
 
-let orbiters=[];
+let orbiters = [];
+
 function makeOrbit(node,r,s,a){
-  const o=document.createElement("div");
-  o.className="orbit";
-  o.dataset.r=r;
-  o.dataset.s=s;
-  o.dataset.a=a;
+  const o = document.createElement("div");
+  o.className = "orbit";
+  o.dataset.r = r;
+  o.dataset.s = s;
+  o.dataset.a = a;
   o.appendChild(node);
   layer.appendChild(o);
   orbiters.push(o);
 }
 
 function orbitLoop(){
-  const t=performance.now();
-  orbiters.forEach(o=>{
-    const r=+o.dataset.r;
-    const s=+o.dataset.s;
-    const a=+o.dataset.a + t*s;
-    o.style.transform=`translate(-50%,-50%) translate(${Math.cos(a)*r}px,${Math.sin(a)*(r*0.7)}px)`;
-  });
+  const t = performance.now();
+  for (const o of orbiters){
+    const r = +o.dataset.r;
+    const s = +o.dataset.s;
+    const a = +o.dataset.a + t*s;
+    o.style.transform =
+      `translate(-50%,-50%) translate(${Math.cos(a)*r}px,${Math.sin(a)*(r*0.7)}px)`;
+  }
   requestAnimationFrame(orbitLoop);
 }
 
 function spawn(){
+  // FOTOS
   ["foto1.jpg","foto2.jpg"].forEach((src,i)=>{
-    const img=document.createElement("img");
-    img.src=src;
-    img.className="floatingMedia";
-    makeOrbit(img,320+i*180,0.00025+i*0.00008,Math.random()*Math.PI*2);
+    const img = document.createElement("img");
+    img.src = src;
+    img.className = "floatingMedia";
+    makeOrbit(img, 320 + i*180, 0.00025 + i*0.00008, Math.random()*Math.PI*2);
   });
 
+  // VIDEOS
   ["video1.mp4","video2.mp4"].forEach((src,i)=>{
-    const v=document.createElement("video");
-    v.src=src; v.autoplay=true; v.loop=true; v.muted=true; v.playsInline=true;
-    v.className="floatingMedia";
-    makeOrbit(v,420+i*200,0.00018+i*0.00007,Math.random()*Math.PI*2);
+    const v = document.createElement("video");
+    v.src = src;
+    v.autoplay = true;
+    v.loop = true;
+    v.muted = true;
+    v.playsInline = true;
+    v.className = "floatingMedia";
+    makeOrbit(v, 420 + i*200, 0.00018 + i*0.00007, Math.random()*Math.PI*2);
   });
 
+  // FRASES
   phrases.forEach((txt,i)=>{
-    const t=document.createElement("div");
-    t.className="floatingText";
-    t.innerText=txt;
-    makeOrbit(t,220+i*120,0.00035+i*0.00005,Math.random()*Math.PI*2);
+    const t = document.createElement("div");
+    t.className = "floatingText";
+    t.innerText = txt;
+    makeOrbit(t, 220 + i*120, 0.00035 + i*0.00005, Math.random()*Math.PI*2);
   });
 
   orbitLoop();
 }
 
-startBtn.onclick=async()=>{
+/* ================= BOTÓN ================= */
+const startBtn = document.getElementById("startBtn");
+let counterTimer = null;
+
+startBtn.onclick = async () => {
   await tryPlayMusic();
 
-  // mostrar y activar contador
+  // ✅ contador visible siempre
   loveCounter.style.display = "block";
   updateLoveCounter();
-  setInterval(updateLoveCounter, 60000);
+  if (counterTimer) clearInterval(counterTimer);
+  counterTimer = setInterval(updateLoveCounter, 1000);
 
-  startBtn.style.display="none";
+  startBtn.style.display = "none";
   spawn();
 };
 </script>
-
 </body>
 </html>

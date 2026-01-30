@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para Diana 💖</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:#000;
+  font-family:Arial, sans-serif;
+  color:white;
+  text-align:center;
+}
+canvas{position:fixed; inset:0; z-index:1}
+
+/* CAPA SORPRESA (encima de la galaxia) */
+#surpriseLayer{
+  position:fixed;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+}
+
+/* BOTÓN */
+#startBtn{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  padding:22px 60px;
+  font-size:28px;
+  background:#ff69b4;
+  color:white;
+  border:none;
+  border-radius:30px;
+  cursor:pointer;
+  box-shadow:0 0 30px hotpink;
+  z-index:10;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.08)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+
+/* ELEMENTOS ORBITANDO */
+.orbit{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:1px;
+  height:1px;
+  will-change:transform;
+}
+
+.floatingMedia{
+  position:absolute;
+  width:140px;
+  border-radius:16px;
+  box-shadow:0 0 20px rgba(255,192,203,.9);
+  transform:translate(-50%,-50%);
+}
+
+.floatingText{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  font-size:24px;
+  color:pink;
+  text-shadow:0 0 15px hotpink;
+  white-space:nowrap;
+  padding:8px 12px;
+  border-radius:16px;
+  background:rgba(0,0,0,.25);
+  backdrop-filter: blur(2px);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="galaxy"></canvas>
+<div id="surpriseLayer"></div>
+
+<button id="startBtn">💖 Toca baby 💕</button>
+
+<script>
+/* 🎵 Música */
+const music = new Audio("cancion.mp3");
+music.loop = true;
+
+/* 🌌 GALAXIA (parpadeo rosado) */
+const canvas = document.getElementById("galaxy");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+const colors = ["#fff","#ff9ccc","#ff69b4","#ffb6c1","#ff4da6"];
+let stars = [];
+for(let i=0;i<750;i++){
+  stars.push({
+    a:Math.random()*Math.PI*2,
+    r:Math.random()*320,
+    s:0.0015+Math.random()*0.003,
+    o:Math.random(),
+    os:0.006+Math.random()*0.012,
+    c:colors[Math.floor(Math.random()*colors.length)]
+  });
+}
+
+function animateGalaxy(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width/2, canvas.height/2);
+
+  stars.forEach(st=>{
+    st.a += st.s;
+    st.o += st.os;
+    if(st.o>1 || st.o<0) st.os *= -1;
+
+    ctx.globalAlpha = st.o;
+    ctx.fillStyle = st.c;
+    ctx.beginPath();
+    ctx.arc(Math.cos(st.a)*st.r, Math.sin(st.a)*st.r, 2, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.restore();
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animateGalaxy);
+}
+animateGalaxy();
+
+/* 💖 SORPRESA ORBITANDO */
+const layer = document.getElementById("surpriseLayer");
+
+const phrases = [
+  "Te amo ranita 💖🐸",
+  "Gracias por existir 🌹",
+  "Eres mi universo ✨",
+  "Mi Diana hermosa 💞",
+  "Siempre juntos ❤️",
+  "Mi lugar favorito eres tú 💘"
+];
+
+function makeOrbitElement(node, radius, speed, startAngle){
+  const orbit = document.createElement("div");
+  orbit.className = "orbit";
+  orbit.dataset.radius = String(radius);
+  orbit.dataset.speed = String(speed);
+  orbit.dataset.angle = String(startAngle);
+  orbit.appendChild(node);
+  layer.appendChild(orbit);
+  return orbit;
+}
+
+let orbiters = [];
+let orbitAnimId = null;
+
+function orbitLoop(){
+  const t = performance.now();
+  orbiters.forEach(o=>{
+    const r = Number(o.dataset.radius);
+    const s = Number(o.dataset.speed);
+    const a0 = Number(o.dataset.angle);
+
+    const a = a0 + (t * s);
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * (r * 0.72); // un poco elíptico
+
+    o.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
+  });
+  orbitAnimId = requestAnimationFrame(orbitLoop);
+}
+
+/* crea fotos orbitando */
+function spawnPhotosOrbit(){
+  const photoFiles = ["foto1.jpg","foto2.jpg"];
+  photoFiles.forEach((src, idx)=>{
+    const img = document.createElement("img");
+    img.src = src;
+    img.className = "floatingMedia";
+
+    const r = 220 + idx*70;           // radios distintos
+    const speed = 0.00035 + idx*0.00008; // velocidades distintas
+    const ang = Math.random()*Math.PI*2;
+
+    orbiters.push(makeOrbitElement(img, r, speed, ang));
+  });
+}
+
+/* crea videos orbitando */
+function spawnVideosOrbit(){
+  const videoFiles = ["video1.mp4","video2.mp4"];
+  videoFiles.forEach((src, idx)=>{
+    const vid = document.createElement("video");
+    vid.src = src;
+    vid.autoplay = true;
+    vid.loop = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.className = "floatingMedia";
+
+    const r = 260 + idx*80;
+    const speed = 0.00028 + idx*0.00007;
+    const ang = Math.random()*Math.PI*2;
+
+    orbiters.push(makeOrbitElement(vid, r, speed, ang));
+  });
+}
+
+/* frases orbitando (se crean varias y rotan) */
+function spawnPhrasesOrbit(){
+  for(let i=0;i<6;i++){
+    const t = document.createElement("div");
+    t.className = "floatingText";
+    t.innerText = phrases[Math.floor(Math.random()*phrases.length)];
+
+    const r = 170 + i*35;
+    const speed = 0.00045 + i*0.00005;
+    const ang = Math.random()*Math.PI*2;
+
+    orbiters.push(makeOrbitElement(t, r, speed, ang));
+  }
+
+  // cada cierto tiempo cambia texto para que no sea repetitivo
+  setInterval(()=>{
+    const texts = layer.querySelectorAll(".floatingText");
+    texts.forEach(el=>{
+      el.innerText = phrases[Math.floor(Math.random()*phrases.length)];
+    });
+  }, 5000);
+}
+
+/* CLICK BOTÓN */
+document.getElementById("startBtn").onclick = async () => {
+  // música (puede fallar si no existe el archivo, no rompe)
+  try{ await music.play(); }catch(e){}
+
+  startBtn.style.display = "none";
+
+  // crear orbitadores
+  spawnPhotosOrbit();
+  spawnVideosOrbit();
+  spawnPhrasesOrbit();
+
+  // iniciar animación de órbita
+  if(!orbitAnimId) orbitLoop();
+};
+</script>
+
+</body>
+</html>
